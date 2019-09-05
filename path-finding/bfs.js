@@ -1,9 +1,10 @@
 // Global variables
+const progressLimit = 30;
 let nodes = [];
-const numOfNodesPerRow = 30;
+const numOfNodesPerRow = 20;
 const size = numOfNodesPerRow - 1;
 // const wallColor = '#3c3c3c';
-const wallColor = '#000';
+const wallColor = '#fff';
 const cnvColor = wallColor;
 const srcColor = '#ff5a5f';
 // const visitedColor = '#087e8b';
@@ -13,6 +14,7 @@ const visitedColor = '#0baabc';
 const destColor = srcColor;
 // const destFoundColor = '#fcaa67';
 const destFoundColor = '#ff262d';
+
 /***************************************************/
 // import Node from '../graph/node';
 class Node {
@@ -125,7 +127,8 @@ function unvisitedVerticesIn(adjList) {
     // Initialize graph
     for (let i = 0; i < numOfNodesPerRow; i++) {
       nodes[i] = [];
-      let color = 'rgb(255,255,255)';
+      // let color = 'rgb(255,255,255)';
+      let color = 'rgb(0,0,0)';
       for (let j = 0; j < numOfNodesPerRow; j++) {
         const isWall = Math.floor(Math.random() * 2);
         nodes[i] = [
@@ -222,7 +225,7 @@ let stopId;
 function bfsAnimate(timestamp) {
   let progress = timestamp - start;
 
-  if (!start || progress > 30) {
+  if (!start || progress > progressLimit) {
     start = timestamp;
 
     if (adjList.length > 0) {
@@ -240,6 +243,7 @@ function bfsAnimate(timestamp) {
         else nodes[adjY][adjX].color = visitedColor;
         nodes[adjY][adjX].wasVisited = true;
       }
+      clearGrid();
       colorGrid();
     }
   }
@@ -249,8 +253,13 @@ function bfsAnimate(timestamp) {
     cancelAnimationFrame(stopId);
   }
 }
-
 stopId = requestAnimationFrame(bfsAnimate);
+
+function clearGrid() {
+  const canvas = document.getElementById('cnv');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
 
 function removeDuplicates() {
   // Split array of coordinates into x & y ordinate arrays
