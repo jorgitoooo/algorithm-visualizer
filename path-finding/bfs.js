@@ -3,18 +3,8 @@
 // Speed of graph traversal
 const progressLimit = 30;
 
-// Node properties
-let nodes = [];
-const numOfNodesPerRow = 20;
-const size = numOfNodesPerRow - 1;
-
 // Colors
-const wallColor = '#fff';
-const cnvColor = wallColor;
-const srcColor = '#ff5a5f';
-const visitedColor = '#0baabc';
-const destColor = srcColor;
-const destFoundColor = '#ff262d';
+const cnvColor = '#fff';
 /******************************************************/
 class Node {
   constructor(x, y, width, height, color, isWall) {
@@ -23,7 +13,7 @@ class Node {
     this.width = width;
     this.height = height;
     this.isWall = isWall;
-    this.color = isWall ? wallColor : color;
+    this.color = isWall ? cnvColor : color;
     this.wasVisited = false;
   }
 
@@ -31,78 +21,102 @@ class Node {
     return [this.x, this.y, this.width, this.height];
   }
 }
-/******************************************************/
-function getAdjacentVertices(x, y) {
-  let adjList = [];
+class Graph {
+  constructor() {
+    this.wallColor = '#fff';
+    this.srcColor = '#ff5a5f';
+    this.visitedColor = '#0baabc';
+    this.destColor = this.srcColor;
+    this.destFoundColor = '#ff262d';
 
-  if (x == 0) {
-    if (y == 0) {
-      adjList = [[x + 1, y], [x + 1, y + 1], [x, y + 1]];
-    } else if (y == size) {
-      adjList = [[x + 1, y], [x + 1, y - 1], [x, y - 1]];
+    this.nodes = [];
+    this.numOfNodesPerRow = 20;
+    this.size = this.numOfNodesPerRow - 1;
+
+    this.source = {
+      x: Math.floor(Math.random() * this.numOfNodesPerRow),
+      y: Math.floor(Math.random() * this.numOfNodesPerRow)
+    };
+    this.destination = {
+      x: Math.floor(Math.random() * this.numOfNodesPerRow),
+      y: Math.floor(Math.random() * this.numOfNodesPerRow)
+    };
+  }
+  getAdjacentVertices(x, y) {
+    let adjList = [];
+
+    if (x == 0) {
+      if (y == 0) {
+        adjList = [[x + 1, y], [x + 1, y + 1], [x, y + 1]];
+      } else if (y == this.size) {
+        adjList = [[x + 1, y], [x + 1, y - 1], [x, y - 1]];
+      } else {
+        adjList = [
+          [x + 1, y],
+          [x + 1, y + 1],
+          [x + 1, y - 1],
+          [x, y - 1],
+          [x, y + 1]
+        ];
+      }
+    } else if (y == 0) {
+      if (x == this.size) {
+        adjList = [[x - 1, y], [x - 1, y + 1], [x, y + 1]];
+      } else {
+        adjList = [
+          [x + 1, y],
+          [x - 1, y],
+          [x - 1, y + 1],
+          [x + 1, y + 1],
+          [x, y + 1]
+        ];
+      }
+    } else if (x == this.size) {
+      if (y == this.size) {
+        adjList = [[x - 1, y], [x - 1, y - 1], [x, y - 1]];
+      } else {
+        adjList = [
+          [x - 1, y],
+          [x - 1, y + 1],
+          [x - 1, y - 1],
+          [x, y - 1],
+          [x, y + 1]
+        ];
+      }
+    } else if (y == this.size) {
+      adjList = [
+        [x + 1, y],
+        [x - 1, y],
+        [x - 1, y - 1],
+        [x + 1, y - 1],
+        [x, y - 1]
+      ];
     } else {
       adjList = [
         [x + 1, y],
+        [x - 1, y],
+        [x - 1, y + 1],
         [x + 1, y + 1],
+        [x - 1, y - 1],
         [x + 1, y - 1],
         [x, y - 1],
         [x, y + 1]
       ];
     }
-  } else if (y == 0) {
-    if (x == size) {
-      adjList = [[x - 1, y], [x - 1, y + 1], [x, y + 1]];
-    } else {
-      adjList = [
-        [x + 1, y],
-        [x - 1, y],
-        [x - 1, y + 1],
-        [x + 1, y + 1],
-        [x, y + 1]
-      ];
-    }
-  } else if (x == size) {
-    if (y == size) {
-      adjList = [[x - 1, y], [x - 1, y - 1], [x, y - 1]];
-    } else {
-      adjList = [
-        [x - 1, y],
-        [x - 1, y + 1],
-        [x - 1, y - 1],
-        [x, y - 1],
-        [x, y + 1]
-      ];
-    }
-  } else if (y == size) {
-    adjList = [
-      [x + 1, y],
-      [x - 1, y],
-      [x - 1, y - 1],
-      [x + 1, y - 1],
-      [x, y - 1]
-    ];
-  } else {
-    adjList = [
-      [x + 1, y],
-      [x - 1, y],
-      [x - 1, y + 1],
-      [x + 1, y + 1],
-      [x - 1, y - 1],
-      [x + 1, y - 1],
-      [x, y - 1],
-      [x, y + 1]
-    ];
+    return this.unvisitedVerticesIn(adjList);
   }
-  return unvisitedVerticesIn(adjList);
-}
-function unvisitedVerticesIn(adjList) {
-  return adjList.filter(
-    coords =>
-      !nodes[coords[1]][coords[0]].wasVisited &&
-      !nodes[coords[1]][coords[0]].isWall
-  );
+  unvisitedVerticesIn(adjList) {
+    return adjList.filter(
+      coords =>
+        !this.nodes[coords[1]][coords[0]].wasVisited &&
+        !this.nodes[coords[1]][coords[0]].isWall
+    );
+  }
 }
 /******************************************************/
+// Graph construction
+const g = new Graph();
+
 (function initCanvas() {
   const canvas = document.getElementById('cnv');
   canvas.style.backgroundColor = cnvColor;
@@ -113,8 +127,8 @@ function unvisitedVerticesIn(adjList) {
   if (canvas.getContext) {
     const pad = canvas.width / 100;
 
-    const dX = canvas.width / numOfNodesPerRow;
-    const dY = canvas.height / numOfNodesPerRow;
+    const dX = canvas.width / g.numOfNodesPerRow;
+    const dY = canvas.height / g.numOfNodesPerRow;
 
     let posX = pad;
     let posY = pad;
@@ -123,14 +137,14 @@ function unvisitedVerticesIn(adjList) {
     const nodeheight = dY - 2 * pad;
 
     // Initialize graph
-    for (let i = 0; i < numOfNodesPerRow; i++) {
-      nodes[i] = [];
+    for (let i = 0; i < g.numOfNodesPerRow; i++) {
+      g.nodes[i] = [];
 
       let color = 'rgb(0,0,0)';
-      for (let j = 0; j < numOfNodesPerRow; j++) {
+      for (let j = 0; j < g.numOfNodesPerRow; j++) {
         const isWall = Math.floor(Math.random() * 2);
-        nodes[i] = [
-          ...nodes[i],
+        g.nodes[i] = [
+          ...g.nodes[i],
           new Node(posX, posY, nodeWidth, nodeheight, color, isWall)
         ];
         posX += dX;
@@ -149,7 +163,7 @@ function colorGrid() {
   const canvas = document.getElementById('cnv');
   const ctx = canvas.getContext('2d');
 
-  nodes.forEach(nodesRow =>
+  g.nodes.forEach(nodesRow =>
     nodesRow.forEach(node => {
       ctx.fillStyle = node.color;
 
@@ -179,25 +193,16 @@ function clearGrid() {
 }
 
 /********************************************************/
-let source = {
-  x: Math.floor(Math.random() * numOfNodesPerRow),
-  y: Math.floor(Math.random() * numOfNodesPerRow)
-};
-let destination = {
-  x: Math.floor(Math.random() * numOfNodesPerRow),
-  y: Math.floor(Math.random() * numOfNodesPerRow)
-};
+let { x, y } = g.source;
 
-let { x, y } = source;
+g.nodes[y][x].wasVisited = true;
+g.nodes[y][x].isWall = false;
+g.nodes[y][x].color = g.srcColor;
 
-nodes[y][x].wasVisited = true;
-nodes[y][x].isWall = false;
-nodes[y][x].color = srcColor;
+g.nodes[g.destination.y][g.destination.x].color = g.destColor;
+g.nodes[g.destination.y][g.destination.x].isWall = false;
 
-nodes[destination.y][destination.x].color = destColor;
-nodes[destination.y][destination.x].isWall = false;
-
-let adjList = getAdjacentVertices(x, y);
+let adjList = g.getAdjacentVertices(x, y);
 let coords = [];
 let adjX = [],
   adjY = [];
@@ -216,18 +221,21 @@ function bfsAnimate(timestamp) {
       coords = adjList.shift();
       [adjX, adjY] = coords;
 
-      if (!nodes[adjY][adjX].isWall) {
-        let tmpAdjList = getAdjacentVertices(adjX, adjY);
+      if (!g.nodes[adjY][adjX].isWall) {
+        let tmpAdjList = g.getAdjacentVertices(adjX, adjY);
 
         adjList = [...adjList, ...tmpAdjList];
 
         // Removes any duplicates that adjList may have
         removeDuplicates();
 
-        if (adjX === destination.x && adjY === destination.y)
-          nodes[adjY][adjX].color = destFoundColor;
-        else nodes[adjY][adjX].color = visitedColor;
-        nodes[adjY][adjX].wasVisited = true;
+        if (adjX === g.destination.x && adjY === g.destination.y) {
+          g.nodes[adjY][adjX].color = g.destFoundColor;
+        } else {
+          g.nodes[adjY][adjX].color = g.visitedColor;
+        }
+
+        g.nodes[adjY][adjX].wasVisited = true;
       }
       clearGrid();
       colorGrid();
@@ -236,7 +244,10 @@ function bfsAnimate(timestamp) {
 
   stopId = requestAnimationFrame(bfsAnimate);
 
-  if (adjList.length < 1 || (adjX == destination.x && adjY == destination.y)) {
+  if (
+    adjList.length < 1 ||
+    (adjX == g.destination.x && adjY == g.destination.y)
+  ) {
     cancelAnimationFrame(stopId);
   }
 }
