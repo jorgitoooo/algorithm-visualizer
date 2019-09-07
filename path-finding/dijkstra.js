@@ -81,7 +81,7 @@ class Graph {
     this.destFoundColor = '#ff262d';
 
     this.nodes = [];
-    this.numOfNodesPerRow = 20;
+    this.numOfNodesPerRow = 25;
     this.size = this.numOfNodesPerRow - 1;
 
     this.source = {
@@ -168,7 +168,6 @@ class Graph {
   markDistances(adjList, x, y) {
     adjList.forEach(([adjX, adjY]) => {
       this.nodes[adjY][adjX].SetPrevNode(this.nodes[y][x]);
-      // console.log(this.nodes[adjY][adjX]);
     });
   }
 }
@@ -181,9 +180,6 @@ class DijkstraNode extends Node {
   }
 
   SetPrevNode(prevNode) {
-    // console.log(this.distance);
-    // console.log(prevNode.distance);
-    // console.log('\n');
     if (this.distance > prevNode.distance + 1) {
       this.distance = prevNode.distance + 1;
       this.prevNode = prevNode;
@@ -195,8 +191,7 @@ class DijkstraNode extends Node {
   }
 
   GetPrevNodeCoords() {
-    if (this.prevNode !== 'undefined')
-      return [this.prevNode.x, this.prevNode.y];
+    if (this.prevNode !== null) return [this.prevNode.x, this.prevNode.y];
   }
 }
 
@@ -323,7 +318,7 @@ let reachable = true;
 let start = null;
 let stopId;
 
-function bfsAnimate(timestamp) {
+function dijkstraAnimate(timestamp) {
   let progress = timestamp - start;
 
   if (!start || progress > progressLimit) {
@@ -354,18 +349,44 @@ function bfsAnimate(timestamp) {
     }
   }
 
-  stopId = requestAnimationFrame(bfsAnimate);
+  stopId = requestAnimationFrame(dijkstraAnimate);
 
   if (
     adjList.length < 1 ||
     (adjX == g.destination.x && adjY == g.destination.y)
   ) {
     cancelAnimationFrame(stopId);
-    g.GetShortestPath(g.nodes[g.destination.y][g.destination.x]);
+
+    start = null;
+    stopId = requestAnimationFrame(pathAnimate);
   }
 }
 
-setTimeout(() => (stopId = requestAnimationFrame(bfsAnimate)), 500);
+let travelingNode = g.nodes[g.destination.y][g.destination.x];
+let pathCompleted = false;
+function pathAnimate(timestamp) {
+  let progress = timestamp - start;
+
+  if (!start || progress > progressLimit) {
+    if (
+      travelingNode.prevNode !== null &&
+      travelingNode !== g.nodes[g.source.y][g.source.x]
+    ) {
+      travelingNode.prevNode.color = g.destFoundColor;
+      travelingNode = travelingNode.prevNode;
+      clearGrid();
+      colorGrid();
+    } else {
+      pathCompleted = true;
+    }
+  }
+  stopId = requestAnimationFrame(pathAnimate);
+  if (pathCompleted) {
+    cancelAnimationFrame(stopId);
+  }
+}
+
+setTimeout(() => (stopId = requestAnimationFrame(dijkstraAnimate)), 500);
 
 // Removes duplicates from coordinates array
 function removeDuplicates() {
